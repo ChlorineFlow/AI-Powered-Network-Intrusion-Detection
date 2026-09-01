@@ -1,0 +1,30 @@
+# Data handling
+pandas
+numpy
+
+# Classical ML
+scikit-learn
+xgboost
+imbalanced-learn
+
+# Explainability
+shap
+
+# Visualization
+matplotlib
+seaborn
+
+# Model persistence
+joblib
+
+# ML inference API
+fastapi
+uvicorn[standard]
+pydantic
+
+# Config
+pyyaml
+python-dotenv
+
+# Testing
+pytest

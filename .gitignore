@@ -1,0 +1,39 @@
+# --- Python / ML ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.ipynb_checkpoints/
+ml/data/raw/**/*
+!ml/data/raw/**/.gitkeep
+ml/data/processed/**/*
+!ml/data/processed/.gitkeep
+ml/saved_models/**/*
+!ml/saved_models/.gitkeep
+ml/experiments/logs/**/*
+ml/experiments/results/**/*
+!ml/experiments/logs/.gitkeep
+!ml/experiments/results/.gitkeep
+ml/figures/**/*
+!ml/figures/.gitkeep
+
+# --- Node ---
+node_modules/
+web/frontend/dist/
+web/backend/dist/
+web/backend/uploads/**/*
+!web/backend/uploads/.gitkeep
+web/backend/logs/**/*
+!web/backend/logs/.gitkeep
+npm-debug.log*
+
+# --- Env / secrets ---
+.env
+.env.local
+*.env
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,25 @@
+{
+  "name": "nids-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Node.js/Express API orchestration layer for the AI-based NIDS.",
+  "type": "module",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "axios": "^1.7.4",
+    "express-rate-limit": "^7.4.0",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {}
+}
