@@ -59,3 +59,16 @@ Per project requirements, the following order is strictly enforced:
 5. Apply class imbalance handling (class weights / SMOTE) — training
    split only
 6. Evaluate on the untouched test split
+
+
+## SVM computational scope
+
+Support Vector Machines scale poorly with dataset size (roughly O(n²) to
+O(n³) for the RBF kernel used here). Training on the full 1,764,483-row
+CICIDS2017 training set is computationally impractical in this project's
+timeframe. SVM is therefore trained and evaluated on a stratified
+subsample of 50,000 rows from the training set, preserving the original
+class balance. This is disclosed explicitly as a scope limitation — SVM
+results in this project are not directly comparable to Random
+Forest/XGBoost/baseline results trained on the full dataset, and any
+reported SVM metrics should be read with that caveat.
