@@ -72,3 +72,43 @@ class balance. This is disclosed explicitly as a scope limitation — SVM
 results in this project are not directly comparable to Random
 Forest/XGBoost/baseline results trained on the full dataset, and any
 reported SVM metrics should be read with that caveat.
+
+
+## Data leakage investigation
+
+Given the high performance metrics observed across all models (>99%
+accuracy on binary and multiclass tasks), two specific leakage
+hypotheses were tested rather than assumed absent:
+
+**1. Classical overfitting (memorization).** Train-set vs test-set
+performance was compared for the best-performing model (XGBoost,
+binary). F1 (macro) gap: 0.9987 (train) vs 0.9986 (test) — a gap of
+0.0001. This rules out memorization-based overfitting: a model that had
+simply memorized training rows would show materially worse performance
+on held-out test data.
+
+**2. Feature-artifact dependence.** CICIDS2017's testbed generated
+specific attacks against fixed destination ports (e.g. FTP-Patator
+against port 21), raising the concern that the model might be learning
+a port-to-label lookup rather than genuine flow-behavior patterns.
+An ablation test retrained XGBoost with `Destination Port` removed
+entirely: F1 (macro) dropped from 0.9986 to 0.9982 — a negligible
+0.04 percentage point change. This indicates the model's performance
+is not substantially dependent on this feature.
+
+**Acknowledged, unresolved limitation: near-duplicate flow bursts.**
+Neither test above rules out a structural property of CICIDS2017: attack
+tools used to generate the dataset (e.g. Hulk, GoldenEye) fire large
+numbers of near-identical requests in rapid succession. Row-level exact
+deduplication (already applied, Step 4) cannot catch flows that differ
+only slightly (e.g. by timestamp-derived fields) while representing
+the same underlying attack burst. If such near-duplicates are split
+across train and test, the model could appear to generalize well while
+actually recognizing minor variations of patterns it has already seen.
+This is a documented, known critique of CICIDS2017-based research
+(e.g. Engelen et al., "Troubleshooting an Intrusion Detection Dataset").
+It is not fully resolvable through row-level techniques and is instead
+addressed empirically via cross-dataset evaluation (RQ5): if performance
+holds up on NSL-KDD and UNSW-NB15 — datasets with entirely different
+generation processes — that is stronger evidence of genuine
+generalization than same-dataset test-set performance alone.
