@@ -200,3 +200,28 @@ instead the expected signature of genuine train/test difficulty
 differences between the two datasets — a legitimate answer to RQ5, and
 a caution against treating CICIDS2017 benchmark numbers as a general
 measure of real-world NIDS performance.
+
+
+## Hyperparameter tuning confirms the gap is generalization, not configuration
+
+To test whether the NSL-KDD performance gap (Step: cross-dataset
+findings above) was simply due to using CICIDS2017-tuned hyperparameters
+on NSL-KDD, XGBoost was independently tuned for NSL-KDD using
+RandomizedSearchCV (30 configurations, 5-fold stratified cross-validation,
+150 total fits, training data only — test labels never touched during
+search).
+
+**Best cross-validated F1 (macro) on training folds: 0.9992**
+**Same tuned model's F1 (macro) on the held-out test set: 0.7949**
+
+This ~20-point gap between cross-validated training performance and
+actual test performance — despite extensive tuning reaching near-perfect
+scores on the training distribution — is strong direct evidence that
+the earlier-observed NSL-KDD performance drop is not a hyperparameter
+configuration problem. No tuning of an XGBoost model's internal
+parameters can supply information about attack patterns absent from the
+training data entirely, and NSL-KDD's test set is explicitly
+constructed to include exactly such novel attack types. Tuning
+therefore confirms rather than resolves the earlier finding: the
+gap reflects a genuine train/test distribution shift built into the
+dataset's design, not a fixable modeling shortcoming.
