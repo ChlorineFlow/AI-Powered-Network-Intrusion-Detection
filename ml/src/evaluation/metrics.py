@@ -1,7 +1,7 @@
 """
 Multi-metric evaluation, as required by project rules — accuracy alone
 is never sufficient, especially given the severe class imbalance found
-during EDA.
+during EDA. Supports both binary and multiclass classification.
 """
 
 import numpy as np
@@ -17,8 +17,11 @@ from sklearn.metrics import (
 
 def compute_metrics(y_true, y_pred, y_proba=None) -> dict:
     """Compute the full metric set required by project rules (§21).
-    y_proba (probability of the positive class) is required for ROC-AUC
-    on binary tasks; pass None to skip it."""
+
+    For binary tasks, pass y_proba as the probability of the positive
+    class (1D array). For multiclass tasks, pass y_proba as the full
+    probability matrix (n_samples, n_classes) from predict_proba().
+    """
     metrics = {
         "accuracy": accuracy_score(y_true, y_pred),
         "precision_macro": precision_score(y_true, y_pred, average="macro", zero_division=0),
@@ -29,19 +32,23 @@ def compute_metrics(y_true, y_pred, y_proba=None) -> dict:
         "f1_weighted": f1_score(y_true, y_pred, average="weighted", zero_division=0),
     }
 
+    n_classes = len(np.unique(y_true))
+
     if y_proba is not None:
         try:
-            metrics["roc_auc"] = roc_auc_score(y_true, y_proba)
+            if n_classes == 2:
+                proba_pos = y_proba[:, 1] if np.ndim(y_proba) == 2 else y_proba
+                metrics["roc_auc"] = roc_auc_score(y_true, proba_pos)
+            else:
+                metrics["roc_auc_ovr_macro"] = roc_auc_score(
+                    y_true, y_proba, multi_class="ovr", average="macro"
+                )
         except ValueError as e:
-            # Can happen if a class is entirely absent from y_true in a split
-            metrics["roc_auc"] = None
             metrics["roc_auc_error"] = str(e)
 
     cm = confusion_matrix(y_true, y_pred)
     metrics["confusion_matrix"] = cm.tolist()
 
-    # False Positive Rate / False Negative Rate — only well-defined for
-    # binary classification (2x2 confusion matrix).
     if cm.shape == (2, 2):
         tn, fp, fn, tp = cm.ravel()
         metrics["false_positive_rate"] = float(fp / (fp + tn)) if (fp + tn) > 0 else None
