@@ -112,3 +112,40 @@ addressed empirically via cross-dataset evaluation (RQ5): if performance
 holds up on NSL-KDD and UNSW-NB15 — datasets with entirely different
 generation processes — that is stronger evidence of genuine
 generalization than same-dataset test-set performance alone.
+
+
+## Further leakage and importance verification
+
+Two additional diagnostics were run to address the near-duplicate-flow
+concern raised above and to independently verify feature importance.
+
+**Near-duplicate overlap check.** Numeric features were rounded to 1
+decimal place and used as an approximate fingerprint to detect
+near-identical rows shared between train and test. Only 1.30% of test
+rows (6,547 of 504,139) had a near-duplicate match in the training set,
+and this overlap was concentrated almost entirely in BENIGN traffic
+(1.53%) — nearly every attack class showed 0.0% overlap. This weighs
+against the near-duplicate-attack-burst leakage hypothesis: if attack
+tools' rapid-fire requests were being split across train/test, high
+overlap would be expected specifically in attack classes, which is not
+observed.
+
+**Permutation importance cross-check.** SHAP's global feature ranking
+(Step 10) was cross-validated against permutation importance — an
+independent method measuring actual F1-macro degradation when each
+feature is randomly shuffled. Five of the top six features matched
+between both methods (Destination Port, Init_Win_bytes_backward,
+Init_Win_bytes_forward, Bwd Packet Length Std, Average Packet Size),
+providing strong, method-independent evidence that the model's reliance
+on these features reflects genuine learned signal rather than an
+artifact of one particular explainability technique.
+
+**Conclusion.** Across five checks (exact-duplicate removal, train/test
+performance gap, single-feature ablation, near-duplicate overlap, and
+cross-method importance verification), no evidence of data leakage or
+memorization was found. The remaining open question is not leakage but
+generalization: `Destination Port` remains the single most important
+feature by both methods, and CICIDS2017's testbed used fixed ports for
+specific attacks. Whether this reflects genuine transferable attack
+behavior or a dataset-specific artifact can only be resolved by
+cross-dataset evaluation (RQ5) on NSL-KDD and UNSW-NB15.
