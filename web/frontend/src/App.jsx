@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import { LayoutDashboard, Activity, ShieldAlert, BarChart3, Info } from "lucide-react";
 import Dashboard from "./pages/Dashboard.jsx";
+import TrafficAnalysis from "./pages/TrafficAnalysis.jsx";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -59,7 +60,7 @@ export default function App() {
         <main className="flex-1 overflow-y-auto">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/traffic" element={<ComingSoon title="Traffic Analysis" />} />
+            <Route path="/traffic" element={<TrafficAnalysis />} />
             <Route path="/alerts" element={<ComingSoon title="Alerts" />} />
             <Route path="/model-performance" element={<ComingSoon title="Model Performance" />} />
             <Route path="/about" element={<ComingSoon title="About" />} />

@@ -12,3 +12,5 @@ export const getRecentPredictions = (limit = 20) =>
   client.get("/api/predictions", { params: { limit } }).then((r) => r.data);
 export const predict = (features, model = "xgboost") =>
   client.post("/api/predict", { features, model }).then((r) => r.data);
+export const predictBatch = (rows, model = "xgboost") =>
+  client.post("/api/predict/batch", { rows, model }).then((r) => r.data);
