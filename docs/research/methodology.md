@@ -430,3 +430,31 @@ consistent with its multiclass results on CICIDS2017 and NSL-KDD,
 though its binary-task advantage did not hold on UNSW-NB15 (Random
 Forest won binary — see above), indicating model ranking is
 task-dependent as well as dataset-dependent.
+
+
+## Cross-dataset explainability comparison
+
+SHAP TreeExplainer was run on the best binary model for each dataset
+(XGBoost for CICIDS2017 and NSL-KDD; Random Forest for UNSW-NB15,
+matching each dataset's actual best-performing model rather than
+using XGBoost uniformly).
+
+| Dataset      | Model         | Top 3 global features (by mean \|SHAP value\|) |
+|--------------|---------------|--------------------------------------------------|
+| CICIDS2017   | XGBoost       | Bwd Packet Length Std, Init_Win_bytes_backward, Destination Port |
+| NSL-KDD      | XGBoost       | src_bytes, dst_host_srv_count, dst_bytes |
+| UNSW-NB15    | Random Forest | sttl, ct_state_ttl, dttl |
+
+No individual feature names overlap across the three datasets, which
+is expected given each uses an entirely different feature engineering
+approach (flow-timing statistics vs KDD-style connection aggregates vs
+TTL/state-based features). However, a consistent conceptual pattern
+emerges: across all three independently-trained models, the dominant
+signal comes from connection-level statistical aggregates (byte/packet
+counts, TTL values, service or state repetition counts) rather than
+any form of payload inspection — none of the three models rely on
+packet content. UNSW-NB15's top feature, `sttl` (source time-to-live),
+is consistent with prior published UNSW-NB15 research noting TTL as a
+particularly strong signal in this dataset, likely reflecting
+differences between attack-generation tooling and normal OS network
+stack behavior.
