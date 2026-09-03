@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import { LayoutDashboard, Activity, ShieldAlert, BarChart3, Info } from "lucide-react";
 import Dashboard from "./pages/Dashboard.jsx";
 import TrafficAnalysis from "./pages/TrafficAnalysis.jsx";
+import ModelPerformance from "./pages/ModelPerformance.jsx";
+import Alerts from "./pages/Alerts.jsx";
+import About from "./pages/About.jsx";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -43,15 +46,6 @@ function Sidebar() {
   );
 }
 
-function ComingSoon({ title }) {
-  return (
-    <div className="p-8">
-      <h1 className="font-display text-xl text-ink mb-2">{title}</h1>
-      <p className="text-muted text-sm">This page is being built in a later phase.</p>
-    </div>
-  );
-}
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -61,9 +55,9 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/traffic" element={<TrafficAnalysis />} />
-            <Route path="/alerts" element={<ComingSoon title="Alerts" />} />
-            <Route path="/model-performance" element={<ComingSoon title="Model Performance" />} />
-            <Route path="/about" element={<ComingSoon title="About" />} />
+            <Route path="/alerts" element={<Alerts />} />
+            <Route path="/model-performance" element={<ModelPerformance />} />
+            <Route path="/about" element={<About />} />
           </Routes>
         </main>
       </div>
