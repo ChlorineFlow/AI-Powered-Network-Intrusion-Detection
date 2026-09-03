@@ -243,3 +243,60 @@ generalization / cross-dataset transfer), and a naive attempt would be
 expected to underperform the dataset-specific models already trained
 in this project. This is documented as a limitation and a direction
 for future work rather than attempted here.
+
+
+## Real-world deployment considerations
+
+The models trained in this project achieve strong results on CICIDS2017
+(99%+ F1) and demonstrate a measured, honest generalization gap on
+NSL-KDD (15-21 F1 points). Neither result should be read as evidence
+that this system is ready for direct deployment on an arbitrary
+organization's live network. Two distinct barriers exist.
+
+**1. Feature availability.** CICIDS2017's 78 features are not raw
+network data — they are flow statistics computed by CICFlowMeter from
+packet captures (e.g. `Flow Bytes/s`, `Init_Win_bytes_backward`,
+`Fwd Packet Length Std`). A deploying organization's raw telemetry
+(NetFlow/sFlow records, firewall logs, Zeek/Bro logs, cloud VPC flow
+logs, EDR telemetry) is not in this format. Deployment would require
+either running CICFlowMeter (or an equivalent tool) against the
+organization's traffic to reproduce matching columns, or building a
+custom translation layer — and some features may not be reconstructable
+from a given organization's available telemetry at all.
+
+**2. Distribution shift beyond what NSL-KDD demonstrated.** CICIDS2017
+represents synthetic 2017 university-testbed traffic generated with
+specific attack tools (Hulk, GoldenEye, Slowloris) in a controlled lab
+environment. A real organization's traffic — cloud SaaS calls,
+containerized microservices, VPN tunnels, IoT devices, encrypted
+channels — differs from this baseline far more than NSL-KDD's benchmark
+traffic does, and this project's own cross-dataset experiment already
+showed a 15-21 point F1 drop moving between two *research benchmark*
+datasets. Additionally, attack techniques evolve: 2017-era volumetric
+DoS tools bear little resemblance to modern techniques such as
+encrypted C2 channels, cloud credential abuse, or living-off-the-land
+attacks, none of which appear in this training data.
+
+**What genuine deployment would require**, consistent with how
+commercial NIDS/EDR vendors approach this problem (per-customer
+baselining rather than one static pretrained model):
+1. A feature-extraction pipeline matched to the organization's actual
+   available telemetry.
+2. Retraining or fine-tuning on the organization's own labeled traffic
+   — in practice the primary bottleneck, since labeled attack examples
+   are rarely available.
+3. Continuous retraining / drift monitoring as traffic and attack
+   techniques evolve over time.
+4. Likely a hybrid detection approach combining supervised
+   classification (for known attack signatures) with anomaly detection
+   (to catch novel, unlabeled attack patterns the supervised model was
+   never trained on).
+5. Human-in-the-loop alert review rather than fully automated blocking,
+   given realistic false-positive and false-negative rates on
+   previously-unseen traffic distributions.
+
+This project is scoped as an academic research system demonstrating
+rigorous methodology (leakage-safe evaluation, cross-dataset validation,
+explainability, documented limitations) rather than a
+deployment-ready product, and this section is presented as a known,
+explicitly acknowledged limitation rather than an oversight.
