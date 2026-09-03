@@ -225,3 +225,21 @@ constructed to include exactly such novel attack types. Tuning
 therefore confirms rather than resolves the earlier finding: the
 gap reflects a genuine train/test distribution shift built into the
 dataset's design, not a fixable modeling shortcoming.
+
+
+## Future work: unified cross-dataset model
+
+A single model trained across CICIDS2017, NSL-KDD, and UNSW-NB15
+simultaneously was considered but not attempted in this project's
+scope. The three datasets do not share a feature space (78 vs 41 vs ~49
+features, measuring different things), and their label taxonomies are
+not directly comparable (e.g. CICIDS2017's "DoS Hulk" vs NSL-KDD's
+"neptune"). A unified model would require: (1) identifying a common
+feature subset across all three, discarding each dataset's richest
+dataset-specific features in the process, and (2) manually constructing
+and justifying a cross-dataset attack-category label mapping. Both are
+themselves open research problems in NIDS literature (domain
+generalization / cross-dataset transfer), and a naive attempt would be
+expected to underperform the dataset-specific models already trained
+in this project. This is documented as a limitation and a direction
+for future work rather than attempted here.
