@@ -22,7 +22,7 @@ from src.evaluation.metrics import compute_metrics
 from src.utils.config import load_config
 
 
-def run_dummy(X_train, y_train, X_test, y_test, dataset_name, real_accuracy, real_f1_macro):
+def run_dummy(X_train, y_train, X_test, y_test, dataset_name, real_metrics):
     dummy = DummyClassifier(strategy="most_frequent")
     dummy.fit(X_train, y_train)
     y_pred = dummy.predict(X_test)
@@ -30,15 +30,11 @@ def run_dummy(X_train, y_train, X_test, y_test, dataset_name, real_accuracy, rea
     metrics = compute_metrics(y_test, y_pred, y_proba[:, 1] if y_proba.shape[1] == 2 else y_proba)
 
     print(f"\n{'=' * 70}\n{dataset_name}\n{'=' * 70}")
-    print(f"Dummy baseline (always predict majority class):")
-    print(f"  Accuracy:    {metrics['accuracy']:.4f}")
-    print(f"  F1 (macro):  {metrics['f1_macro']:.4f}")
-    print(f"Real trained model (best):")
-    print(f"  Accuracy:    {real_accuracy:.4f}")
-    print(f"  F1 (macro):  {real_f1_macro:.4f}")
-    print(f"Lift over dummy baseline:")
-    print(f"  Accuracy lift:   +{(real_accuracy - metrics['accuracy']) * 100:.2f} points")
-    print(f"  F1 (macro) lift: +{(real_f1_macro - metrics['f1_macro']) * 100:.2f} points")
+    print(f"{'Metric':<20}{'Dummy':>12}{'Real model':>14}{'Lift':>10}")
+    for key in ["accuracy", "precision_macro", "recall_macro", "f1_macro"]:
+        dummy_val = metrics[key]
+        real_val = real_metrics[key]
+        print(f"{key:<20}{dummy_val:>12.4f}{real_val:>14.4f}{(real_val - dummy_val)*100:>9.2f}pp")
 
 
 def main():
@@ -54,8 +50,10 @@ def main():
     y_train = (train_df["Label"] != "BENIGN").astype(int)
     X_test = test_df[feature_cols]
     y_test = (test_df["Label"] != "BENIGN").astype(int)
-    run_dummy(X_train, y_train, X_test, y_test, "CICIDS2017 (binary)",
-              real_accuracy=0.9992, real_f1_macro=0.9986)
+    run_dummy(X_train, y_train, X_test, y_test, "CICIDS2017 (binary)", real_metrics={
+        "accuracy": 0.9992, "precision_macro": 0.9983,
+        "recall_macro": 0.9989, "f1_macro": 0.9986,
+    })
 
     # ---- NSL-KDD ----
     raw_dir = ml_root / "data" / "raw" / "nsl_kdd"
@@ -64,8 +62,10 @@ def main():
     X_train, X_test, _ = nsl_prepare(train_df, test_df)
     y_train = make_binary_label(train_df)
     y_test = make_binary_label(test_df)
-    run_dummy(X_train, y_train, X_test, y_test, "NSL-KDD (binary)",
-              real_accuracy=0.7981, real_f1_macro=0.7978)
+    run_dummy(X_train, y_train, X_test, y_test, "NSL-KDD (binary)", real_metrics={
+        "accuracy": 0.7981, "precision_macro": 0.8286,
+        "recall_macro": 0.8192, "f1_macro": 0.7978,
+    })
 
     # ---- UNSW-NB15 ----
     raw_dir = ml_root / "data" / "raw" / "unsw_nb15"
@@ -74,8 +74,10 @@ def main():
     X_train, X_test, _ = unsw_prepare(train_df, test_df)
     y_train = train_df["label"]
     y_test = test_df["label"]
-    run_dummy(X_train, y_train, X_test, y_test, "UNSW-NB15 (binary)",
-              real_accuracy=0.9062, real_f1_macro=0.9038)
+    run_dummy(X_train, y_train, X_test, y_test, "UNSW-NB15 (binary)", real_metrics={
+        "accuracy": 0.9062, "precision_macro": 0.9150,
+        "recall_macro": 0.8992, "f1_macro": 0.9038,
+    })
 
 
 if __name__ == "__main__":

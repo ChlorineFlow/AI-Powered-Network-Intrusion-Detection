@@ -372,3 +372,15 @@ class skew. Notably, CICIDS2017's dummy-baseline accuracy (83.11%) is
 itself high purely due to imbalance — underscoring why this project
 reports F1 (macro), precision/recall, and confusion matrices throughout
 rather than relying on accuracy alone (per project methodology, §21).
+
+**Why this test is mathematically airtight.** A classifier that always
+predicts the majority class achieves exactly 50% recall (macro),
+regardless of how imbalanced the data is — 100% recall on the always-
+predicted class and 0% recall on the other, averaged. This is a hard
+mathematical ceiling, not an empirical coincidence (confirmed exactly:
+0.5000 macro recall for the dummy baseline on all three datasets
+tested). The real trained models score 81.9%-99.9% macro recall across
+the three datasets — 32 to 50 percentage points above this ceiling —
+which is not achievable through class-imbalance exploitation alone and
+directly demonstrates genuine minority-class (and majority-class)
+discrimination ability.
