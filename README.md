@@ -1,6 +1,6 @@
 # 🛡️ AI-Based Network Intrusion Detection System
 
-A research-oriented Network Intrusion Detection System (NIDS) combining classical machine learning with a full-stack monitoring dashboard. Built with a strict three-layer architecture (React → Node/Express → FastAPI ML service) and research-grade data hygiene: leakage-safe splitting, documented handling of class imbalance, and no fabricated results.
+A research-oriented Network Intrusion Detection System (NIDS) combining classical machine learning with a full-stack monitoring dashboard. Built with a strict three-layer architecture (React → Node/Express + PostgreSQL → Python/FastAPI ML service) and research-grade data hygiene: leakage-safe splitting, documented class-imbalance handling, cross-dataset validation, and no fabricated results.
 
 > **Research title:** *A Robust Machine Learning-Based Network Intrusion Detection Framework with Feature Optimization and Cross-Dataset Evaluation*
 
@@ -8,31 +8,46 @@ A research-oriented Network Intrusion Detection System (NIDS) combining classica
 
 ## 🎯 Project Status
 
-**Actively in development.** Dataset pipeline, EDA, and leakage-safe preprocessing are complete and verified against the real CICIDS2017 dataset (2.83M flow records). Model training, the FastAPI inference service, and the dashboard are in progress.
+**Feature-complete and fully functional end-to-end.** Every layer — ML pipeline, inference API, backend, and dashboard — is built, tested, and verified with real data.
 
-| Phase | Status |
+| Component | Status |
 |---|---|
-| Project architecture & scaffolding | ✅ Complete |
-| Dataset loaders & schema validators | ✅ Complete — tested |
-| Exploratory Data Analysis (CICIDS2017) | ✅ Complete |
-| Leakage-safe preprocessing pipeline | ✅ Complete — tested |
-| Baseline ML models | 🔄 In progress |
-| Advanced ML models (RF, XGBoost, SVM) | ⏳ Planned |
-| Feature selection & optimization | ⏳ Planned |
-| Explainable AI (SHAP) | ⏳ Planned |
-| FastAPI inference service | ⏳ Planned |
-| Node/Express backend + PostgreSQL | 🔄 Scaffolded |
-| React dashboard | 🔄 Scaffolded |
+| Dataset loaders, validators, EDA (CICIDS2017) | ✅ Complete |
+| Leakage-safe preprocessing pipeline | ✅ Complete |
+| Baseline + advanced ML models (binary & multiclass) | ✅ Complete |
+| Feature optimization (All Features vs Selected vs PCA) | ✅ Complete |
+| SHAP explainability + permutation importance verification | ✅ Complete |
+| Data leakage investigation (5 independent tests) | ✅ Complete |
+| Cross-dataset validation (NSL-KDD) + hyperparameter tuning | ✅ Complete |
+| FastAPI inference service (6 endpoints) | ✅ Complete |
+| Node.js/Express backend + PostgreSQL | ✅ Complete |
+| React dashboard (5 pages) | ✅ Complete |
+| UNSW-NB15 (third dataset) | ⏳ Not yet started |
+| Automated backend/frontend tests | ⏳ Partial (ML: 13 pytest tests passing) |
 
 ---
 
-## 📊 Real Findings from EDA (2,830,743 flow records)
+## 📊 Real Results — Nothing Fabricated
 
-These are actual measured statistics from the full CICIDS2017 dataset — not estimates:
+### Binary classification (CICIDS2017, leakage-safe split)
 
-- **Class imbalance:** 80.3% benign traffic vs 19.7% attack traffic at the binary level; a **206,645:1** ratio between the majority class and the rarest attack type (Heartbleed, 11 samples) at the multiclass level.
-- **Data quality artifacts identified and handled:** 308,381 exact duplicate rows (10.9%) removed *before* splitting to prevent train/test leakage; infinite and NaN values in flow-rate features (from division-by-zero in near-zero-duration flows) explicitly cleaned; a small number of physically invalid negative-duration records filtered out.
-- **Methodological decision, documented:** three attack classes with fewer than 50 total samples are excluded from multiclass evaluation (though retained in binary classification) because a stratified split would leave 1–4 test samples per class — not enough for a statistically meaningful F1 score. See [`docs/research/methodology.md`](docs/research/methodology.md).
+| Model | Accuracy | F1 (macro) | ROC-AUC | FPR | FNR |
+|---|---|---|---|---|---|
+| Logistic Regression | 93.89% | 0.903 | 0.9875 | 6.87% | 2.37% |
+| Decision Tree | 99.89% | 0.998 | 0.9994 | 0.108% | 0.093% |
+| Random Forest | 99.89% | 0.998 | 0.99997 | 0.109% | 0.090% |
+| **XGBoost** | **99.92%** | **0.999** | **0.99998** | **0.064%** | **0.149%** |
+
+### Cross-dataset generalization (NSL-KDD, independently trained)
+
+| Model | Accuracy | F1 (macro) |
+|---|---|---|
+| Logistic Regression | 75.50% | 0.755 |
+| Decision Tree | 79.15% | 0.791 |
+| Random Forest | 78.42% | 0.784 |
+| XGBoost | 79.81% | 0.798 |
+
+**Every model dropped 15-21 F1 points moving from CICIDS2017 to NSL-KDD** — confirmed via independent hyperparameter tuning (near-perfect 0.999 cross-validated training score, unchanged ~0.795 test score) to be a genuine train/test distribution shift, not a fixable configuration issue. This finding is documented in full in [`docs/research/methodology.md`](docs/research/methodology.md), including a 5-test investigation that explicitly ruled out data leakage as the cause of CICIDS2017's high scores (exact-duplicate removal, train/test performance gap analysis, feature-ablation testing, near-duplicate-flow overlap checking, and cross-method feature-importance verification via SHAP + permutation importance).
 
 ---
 
@@ -46,80 +61,104 @@ Node.js Backend (Express.js) ──▶ PostgreSQL (prediction history, alerts)
 ▼
 Python ML Service (FastAPI)
 │
-Preprocessing → Trained Model → Prediction → Explainability
+Preprocessing → Trained Model (XGBoost) → Prediction → SHAP Explainability
 
 
-React never communicates directly with the Python service — every request is proxied through the Node/Express layer, keeping ML inference, business logic, and presentation cleanly separated.
+React never communicates directly with the Python service — every request is proxied through the Node/Express layer.
+
+## 🖥️ Dashboard
+
+Five fully functional pages, all backed by live data:
+- **Dashboard** — real-time attack ratio, traffic totals, active model, attack distribution, recent alerts
+- **Traffic Analysis** — upload a CSV, run live batch predictions through the actual trained XGBoost model
+- **Alerts** — filterable list of detected attacks with severity and status
+- **Model Performance** — real experiment comparisons across all 4 trained models (binary + multiclass)
+- **About** — project summary and documented limitations
 
 ## 🧰 Tech Stack
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React.js, Vite, JavaScript, Tailwind CSS, React Router, Axios, Recharts, Lucide React |
+| **Frontend** | React.js, Vite, JavaScript, Tailwind CSS, React Router, Axios, Recharts, Lucide React, PapaParse |
 | **Backend** | Node.js, Express.js, PostgreSQL, Helmet, Morgan, express-rate-limit |
 | **ML** | Python, Pandas, NumPy, Scikit-learn, XGBoost, imbalanced-learn, SHAP, Joblib |
 | **ML API** | FastAPI, Uvicorn, Pydantic |
-| **Testing** | Pytest (13 tests passing — schema validation, dataset loading, encoding fixes, leakage-safe splitting) |
+| **Testing** | Pytest (13 tests — schema validation, dataset loading, encoding fixes, leakage-safe splitting) |
 
 ## 📁 Repository Structure
 
 network-intrusion-detection/
 ├── ml/ # Data loaders, validators, EDA, preprocessing, models, FastAPI service
 ├── web/
-│ ├── frontend/ # React dashboard
+│ ├── frontend/ # React dashboard (5 pages)
 │ └── backend/ # Express API + PostgreSQL
 └── docs/ # Architecture, research methodology, experiment logs, API docs
 
 
 ## 🔬 Engineering Practices
 
-- **Leakage prevention by design:** deduplication and invalid-row cleaning happen *before* any train/test split; scalers, encoders, and resampling are fit on the training split only — never on validation or test data.
-- **Reproducibility:** every experiment is configured via `ml/config.yaml` (random seed, split ratios, model list) rather than hardcoded values.
-- **Test coverage on real data paths:** loaders and cleaning logic are unit-tested with synthetic edge cases (corrupted encodings, infinite values, negative durations) *and* verified against the full real dataset.
-- **No fabricated results:** every metric in this repository comes from an actual executed experiment, logged under `ml/experiments/results/`. Planned/future work is explicitly marked as such.
+- **Leakage prevention by design:** deduplication and invalid-row cleaning happen before any train/test split; scalers, encoders, and feature selectors are fit on the training split only.
+- **Rigor over convenient numbers:** a 99%+ accuracy result on CICIDS2017 triggered a 5-test independent leakage investigation and a full cross-dataset validation on NSL-KDD before being trusted — not just reported at face value.
+- **Reproducibility:** every experiment is configured via `ml/config.yaml` and logged with full traceability (model, hyperparameters, random seed, timing, metrics) under `ml/experiments/results/`.
+- **No fabricated results:** every metric in this repository and dashboard comes from an actual executed, logged experiment. Known limitations (generalization gap, rare-class exclusion, SVM subsampling) are explicitly documented rather than hidden.
 
 ## 📚 Datasets
 
 - **CICIDS2017** (primary) — [CIC, University of New Brunswick](https://www.unb.ca/cic/datasets/ids-2017.html)
-- **NSL-KDD** (secondary benchmark)
-- **UNSW-NB15** (cross-dataset generalization)
+- **NSL-KDD** (cross-dataset validation) — trained and evaluated independently
+- **UNSW-NB15** (planned, not yet integrated)
 
 Datasets are not bundled in this repository (large, license-gated). See [`ml/data/README.md`](ml/data/README.md) for download and setup instructions.
 
 ## 🚀 Getting Started
 
+Three services must run simultaneously:
+
 ```bash
-# ML environment
+# Terminal 1 — ML inference service (FastAPI)
 cd ml
 python -m venv .venv
 .venv\Scripts\Activate.ps1   # Windows
 pip install -r requirements.txt
-pytest tests/ -v             # 13 tests should pass
+uvicorn src.inference.app:app --reload --port 8000
 
-# Backend
-cd ../web/backend
+# Terminal 2 — Backend (Express + PostgreSQL)
+cd web/backend
+npm install
+cp .env.example .env   # configure DATABASE_URL
+node src/db/migrate.js  # create tables (run once)
+node src/app.js
+
+# Terminal 3 — Frontend (React)
+cd web/frontend
 npm install
 cp .env.example .env
-
-# Frontend
-cd ../frontend
-npm install
-cp .env.example .env
+npm run dev
 ```
 
-Full setup instructions for datasets, environment variables, and running each service are in each subfolder's README.
+Then open `http://localhost:5173`.
+
+## 📖 Key Documentation
+
+- [`docs/research/methodology.md`](docs/research/methodology.md) — full methodology, including the data leakage investigation and cross-dataset generalization findings
+- [`docs/research/research-questions.md`](docs/research/research-questions.md) — RQ1-RQ7 and their answers
+- [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md) — full system design
 
 ## 🗺️ Roadmap
 
-- [ ] Baseline models: Logistic Regression, Decision Tree
-- [ ] Advanced models: Random Forest, XGBoost, SVM
-- [ ] Feature selection & PCA comparison
-- [ ] SHAP-based explainability
-- [ ] FastAPI inference service (`/predict`, `/explain`, `/metrics`)
-- [ ] Node/Express API + PostgreSQL persistence
-- [ ] React SOC-style dashboard
-- [ ] Cross-dataset generalization evaluation (NSL-KDD, UNSW-NB15)
-- [ ] Research paper–style results writeup
+- [x] Baseline models: Logistic Regression, Decision Tree
+- [x] Advanced models: Random Forest, XGBoost, subsampled SVM
+- [x] Feature selection & PCA comparison
+- [x] SHAP-based explainability + permutation importance verification
+- [x] Data leakage investigation (5 independent tests)
+- [x] Cross-dataset validation on NSL-KDD + hyperparameter tuning
+- [x] FastAPI inference service
+- [x] Node/Express API + PostgreSQL persistence
+- [x] React SOC-style dashboard (5 pages)
+- [ ] UNSW-NB15 integration
+- [ ] Unified cross-dataset model (documented as future work — see methodology.md)
+- [ ] Automated backend/frontend test coverage
+- [ ] Research paper–style final writeup
 
 ## 📄 License
 
