@@ -458,3 +458,58 @@ is consistent with prior published UNSW-NB15 research noting TTL as a
 particularly strong signal in this dataset, likely reflecting
 differences between attack-generation tooling and normal OS network
 stack behavior.
+
+
+## Exploratory unified cross-dataset model
+
+Following the finding that no single specialized model dominates
+across all three datasets, an exploratory experiment tested whether
+ONE model, trained on a combined dataset using a small hand-picked
+common feature subset (duration, source/destination byte counts, and
+their derived total/log-transformed variants — 5 features), could
+achieve reasonably consistent performance across all three, as a
+trade-off against dataset-specific specialization.
+
+**Limitation, disclosed upfront:** unlike Sarhan et al. (2021)'s
+NetFlow-standardized dataset collection — which does not cover this
+project's exact three-dataset combination, since NSL-KDD's underlying
+raw captures are not available for reprocessing — this common feature
+set was hand-selected from existing processed columns rather than
+re-derived from raw traffic. Packet-count features were excluded
+entirely, since NSL-KDD's `count`/`srv_count` fields are time-window
+connection aggregates, not per-flow packet counts comparable to the
+other two datasets' `Total Fwd/Backward Packets` and `spkts`/`dpkts`.
+
+### Results (unified XGBoost model, F1 macro)
+
+| Evaluation set | Specialized model F1 | Unified model F1 | Gap |
+|----------------|----------------------:|-------------------:|------:|
+| CICIDS2017     | 0.999                 | 0.981               | -0.018 |
+| NSL-KDD        | 0.798                 | 0.762               | -0.036 |
+| UNSW-NB15      | 0.904                 | 0.797               | -0.107 |
+| Combined test  | n/a                   | 0.939               | — |
+
+### Finding
+
+Degradation from specialization to unification is **not uniform**: it
+is small for CICIDS2017 and NSL-KDD but substantially larger for
+UNSW-NB15 (-10.7 F1 points). This is directly explained by training
+set composition — CICIDS2017 comprises ~85% of the combined training
+set (1.76M of 2.07M rows), causing the unified model to learn
+traffic-normality patterns skewed toward CICIDS2017/NSL-KDD-style
+traffic. On UNSW-NB15's test set specifically, the unified XGBoost
+model's false positive rate reached 31.7% — meaning nearly a third of
+UNSW-NB15's genuinely normal traffic was flagged as an attack, because
+the model's learned notion of "normal" (derived predominantly from the
+other two datasets) does not match UNSW-NB15's actual normal traffic
+profile.
+
+This is a concrete, empirical demonstration of the "every
+organization's traffic baseline is different" concern raised in the
+Real-World Deployment Considerations section above: a model's
+definition of "normal" is inherited from its training distribution,
+and combining datasets naively does not average out this bias — it
+is dominated by whichever source dataset is largest. A production-
+grade unified approach would likely require per-source normalization
+or explicit domain-balancing during training, neither of which was
+attempted here, consistent with this experiment's exploratory scope.
