@@ -4,9 +4,15 @@ import MetricsTable from "../components/dashboard/MetricsTable.jsx";
 import { getModelMetrics } from "../services/api.js";
 
 const CORE_MODELS = ["logistic_regression", "decision_tree", "random_forest", "xgboost"];
+const DATASETS = [
+  { key: "cicids2017", label: "CICIDS2017" },
+  { key: "nsl_kdd", label: "NSL-KDD" },
+  { key: "unsw_nb15", label: "UNSW-NB15" },
+];
 
 export default function ModelPerformance() {
   const [results, setResults] = useState([]);
+  const [dataset, setDataset] = useState("cicids2017");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -25,12 +31,13 @@ export default function ModelPerformance() {
       </div>
     );
 
-  const binaryResults = results.filter(
-    (r) => r.task === "binary" && CORE_MODELS.includes(r.model)
-  );
-  const multiclassResults = results.filter(
-    (r) => r.task === "multiclass" && CORE_MODELS.includes(r.model)
-  );
+  const forDataset = (task) =>
+    results.filter(
+      (r) => r.dataset === dataset && r.task === task && CORE_MODELS.includes(r.model)
+    );
+
+  const binaryResults = forDataset("binary");
+  const multiclassResults = forDataset("multiclass");
 
   const chartData = (rows) =>
     rows.map((r) => ({
@@ -40,32 +47,62 @@ export default function ModelPerformance() {
     }));
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-8 space-y-6">
       <div>
         <h1 className="font-display text-xl text-ink">Model Performance</h1>
         <p className="text-muted text-sm mt-1">
-          Real, logged results from experiments run on CICIDS2017 — no fabricated numbers.
+          Real, logged results — each dataset trained and evaluated independently.
         </p>
       </div>
 
-      <div className="bg-surface border border-hairline rounded-md p-5">
-        <h2 className="font-display text-sm text-ink mb-1">Binary classification (BENIGN vs ATTACK)</h2>
-        <p className="text-muted text-xs mb-4">Trained and evaluated on the full leakage-safe CICIDS2017 split.</p>
-        <ModelComparisonChart data={chartData(binaryResults)} />
-        <div className="mt-4">
-          <MetricsTable rows={binaryResults} />
-        </div>
+      <div className="flex gap-2">
+        {DATASETS.map((d) => (
+          <button
+            key={d.key}
+            onClick={() => setDataset(d.key)}
+            className={`px-4 py-2 rounded-md text-sm font-mono border transition-colors ${
+              dataset === d.key
+                ? "bg-raised border-info/40 text-info"
+                : "border-hairline text-muted hover:text-ink"
+            }`}
+          >
+            {d.label}
+          </button>
+        ))}
       </div>
 
       <div className="bg-surface border border-hairline rounded-md p-5">
-        <h2 className="font-display text-sm text-ink mb-1">Multiclass attack classification</h2>
+        <h2 className="font-display text-sm text-ink mb-1">Binary classification</h2>
         <p className="text-muted text-xs mb-4">
-          12 attack classes (3 rare classes excluded — see documented methodology).
+          {binaryResults.length > 0
+            ? "Normal/Benign vs Attack, evaluated on this dataset's own held-out test set."
+            : "No binary results logged for this dataset yet."}
         </p>
-        <ModelComparisonChart data={chartData(multiclassResults)} />
-        <div className="mt-4">
-          <MetricsTable rows={multiclassResults} />
-        </div>
+        {binaryResults.length > 0 && (
+          <>
+            <ModelComparisonChart data={chartData(binaryResults)} />
+            <div className="mt-4">
+              <MetricsTable rows={binaryResults} />
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="bg-surface border border-hairline rounded-md p-5">
+        <h2 className="font-display text-sm text-ink mb-1">Multiclass classification</h2>
+        <p className="text-muted text-xs mb-4">
+          {multiclassResults.length > 0
+            ? "Attack-category classification, with low-sample classes excluded per documented methodology."
+            : "No multiclass results logged for this dataset yet."}
+        </p>
+        {multiclassResults.length > 0 && (
+          <>
+            <ModelComparisonChart data={chartData(multiclassResults)} />
+            <div className="mt-4">
+              <MetricsTable rows={multiclassResults} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
