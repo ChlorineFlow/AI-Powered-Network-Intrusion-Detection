@@ -1,53 +1,28 @@
 # 🛡️ AI-Based Network Intrusion Detection System
 
-A research-oriented Network Intrusion Detection System (NIDS) combining classical machine learning with a full-stack monitoring dashboard. Built with a strict three-layer architecture (React → Node/Express + PostgreSQL → Python/FastAPI ML service) and research-grade data hygiene: leakage-safe splitting, documented class-imbalance handling, cross-dataset validation, and no fabricated results.
+**A research-grade, full-stack Network Intrusion Detection System** combining classical machine learning with a live monitoring dashboard — built with the same rigor expected in published NIDS research: leakage-safe evaluation, cross-dataset validation, explainability, and honestly documented limitations.
 
 > **Research title:** *A Robust Machine Learning-Based Network Intrusion Detection Framework with Feature Optimization and Cross-Dataset Evaluation*
 
----
-
-## 🎯 Project Status
-
-**Feature-complete and fully functional end-to-end.** Every layer — ML pipeline, inference API, backend, and dashboard — is built, tested, and verified with real data.
-
-| Component | Status |
-|---|---|
-| Dataset loaders, validators, EDA (CICIDS2017) | ✅ Complete |
-| Leakage-safe preprocessing pipeline | ✅ Complete |
-| Baseline + advanced ML models (binary & multiclass) | ✅ Complete |
-| Feature optimization (All Features vs Selected vs PCA) | ✅ Complete |
-| SHAP explainability + permutation importance verification | ✅ Complete |
-| Data leakage investigation (5 independent tests) | ✅ Complete |
-| Cross-dataset validation (NSL-KDD) + hyperparameter tuning | ✅ Complete |
-| FastAPI inference service (6 endpoints) | ✅ Complete |
-| Node.js/Express backend + PostgreSQL | ✅ Complete |
-| React dashboard (5 pages) | ✅ Complete |
-| UNSW-NB15 (third dataset) | ⏳ Not yet started |
-| Automated backend/frontend tests | ⏳ Partial (ML: 13 pytest tests passing) |
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3.13-blue)
+![React](https://img.shields.io/badge/React-18-61DAFB)
+![Node.js](https://img.shields.io/badge/Node.js-Express-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-336791)
 
 ---
 
-## 📊 Real Results — Nothing Fabricated
+## ✨ Highlights
 
-### Binary classification (CICIDS2017, leakage-safe split)
+- 🎯 **3 independently-evaluated benchmark datasets** — CICIDS2017, NSL-KDD, UNSW-NB15 — no dataset shortcuts, no shared/transferred models
+- 🧠 **~26 trained models** across binary and multiclass tasks, baseline through advanced (Logistic Regression → Decision Tree → Random Forest → XGBoost → SVM)
+- 🔬 **A 5-test data leakage investigation** run specifically because 99%+ accuracy looked "too good" — exact-duplicate removal, train/test gap analysis, feature ablation, near-duplicate-flow overlap check, cross-method SHAP + permutation importance verification
+- 📉 **Honest cross-dataset generalization findings** — every model dropped 15-21 F1 points moving from CICIDS2017 to NSL-KDD, confirmed via hyperparameter tuning to be genuine distribution shift, not a fixable config issue
+- 🧮 **Mathematically-grounded imbalance sanity check** — real models exceed the 50% macro-recall ceiling that class-imbalance exploitation alone can never cross, by 32-50 points, across all three datasets
+- 🖥️ **A fully functional 4-layer live system** — React dashboard → Express/PostgreSQL → FastAPI → XGBoost, verified end-to-end with real predictions
+- 📊 **SHAP explainability**, cross-validated against permutation importance, run independently on all three datasets
 
-| Model | Accuracy | F1 (macro) | ROC-AUC | FPR | FNR |
-|---|---|---|---|---|---|
-| Logistic Regression | 93.89% | 0.903 | 0.9875 | 6.87% | 2.37% |
-| Decision Tree | 99.89% | 0.998 | 0.9994 | 0.108% | 0.093% |
-| Random Forest | 99.89% | 0.998 | 0.99997 | 0.109% | 0.090% |
-| **XGBoost** | **99.92%** | **0.999** | **0.99998** | **0.064%** | **0.149%** |
-
-### Cross-dataset generalization (NSL-KDD, independently trained)
-
-| Model | Accuracy | F1 (macro) |
-|---|---|---|
-| Logistic Regression | 75.50% | 0.755 |
-| Decision Tree | 79.15% | 0.791 |
-| Random Forest | 78.42% | 0.784 |
-| XGBoost | 79.81% | 0.798 |
-
-**Every model dropped 15-21 F1 points moving from CICIDS2017 to NSL-KDD** — confirmed via independent hyperparameter tuning (near-perfect 0.999 cross-validated training score, unchanged ~0.795 test score) to be a genuine train/test distribution shift, not a fixable configuration issue. This finding is documented in full in [`docs/research/methodology.md`](docs/research/methodology.md), including a 5-test investigation that explicitly ruled out data leakage as the cause of CICIDS2017's high scores (exact-duplicate removal, train/test performance gap analysis, feature-ablation testing, near-duplicate-flow overlap checking, and cross-method feature-importance verification via SHAP + permutation importance).
+This isn't a tutorial clone — every number here comes from an executed, logged experiment, and every limitation is disclosed rather than hidden.
 
 ---
 
@@ -61,19 +36,64 @@ Node.js Backend (Express.js) ──▶ PostgreSQL (prediction history, alerts)
 ▼
 Python ML Service (FastAPI)
 │
-Preprocessing → Trained Model (XGBoost) → Prediction → SHAP Explainability
+Preprocessing → Trained Model → Prediction → SHAP Explainability
 
 
-React never communicates directly with the Python service — every request is proxied through the Node/Express layer.
+Strict separation of concerns: React never talks to Python directly — every request is proxied through Node/Express, per a mandated three-layer architecture.
 
-## 🖥️ Dashboard
+---
 
-Five fully functional pages, all backed by live data:
-- **Dashboard** — real-time attack ratio, traffic totals, active model, attack distribution, recent alerts
-- **Traffic Analysis** — upload a CSV, run live batch predictions through the actual trained XGBoost model
-- **Alerts** — filterable list of detected attacks with severity and status
-- **Model Performance** — real experiment comparisons across all 4 trained models (binary + multiclass)
-- **About** — project summary and documented limitations
+## 📊 Real Results (Nothing Fabricated)
+
+Full breakdown for every model, every dataset, every task: **[`docs/experiments/results-analysis.md`](docs/experiments/results-analysis.md)**
+
+### Best model per dataset — no single algorithm dominates
+
+| Dataset | Best binary model | F1 (macro) | Best multiclass model | F1 (macro) |
+|---|---|---:|---|---:|
+| CICIDS2017 | XGBoost | **0.999** | XGBoost | 0.911 |
+| NSL-KDD | XGBoost | 0.798 | Decision Tree | 0.813 |
+| UNSW-NB15 | **Random Forest** | 0.904 | XGBoost | 0.511 |
+
+*Random Forest — not XGBoost — wins on UNSW-NB15, a genuine, non-cherry-picked finding that directly challenges "just use XGBoost" assumptions.*
+
+### The generalization gap — measured, not assumed
+
+| Model | CICIDS2017 F1 | NSL-KDD F1 | Drop |
+|---|---:|---:|---:|
+| XGBoost | 0.999 | 0.798 | **-0.201** |
+| Random Forest | 0.998 | 0.784 | -0.214 |
+| Decision Tree | 0.998 | 0.791 | -0.207 |
+
+Confirmed via independent hyperparameter tuning: best cross-validated training F1 reached **0.9992**, yet test F1 stayed at **0.7949** — proving the gap is genuine distribution shift, not a tunable configuration problem.
+
+### Is the high accuracy just class imbalance? Tested, not assumed.
+
+| Dataset | Dummy baseline F1 | Real model F1 | Lift |
+|---|---:|---:|---:|
+| CICIDS2017 | 0.454 | 0.999 | **+54.5 points** |
+| NSL-KDD | 0.301 | 0.798 | +49.7 points |
+| UNSW-NB15 | 0.355 | 0.904 | +54.9 points |
+
+A majority-class-only classifier is mathematically capped at exactly 50% macro recall. Real models clear this ceiling by 32-50 points on all three datasets — evidence that cannot be produced by imbalance exploitation alone.
+
+---
+
+## 🖥️ Live Dashboard
+
+Five fully functional pages, all backed by real data flowing through the entire stack:
+
+| Page | What it does |
+|---|---|
+| **Dashboard** | Real-time attack ratio, traffic totals, active model, attack distribution, recent alerts |
+| **Traffic Analysis** | Upload a CSV → live batch prediction through the actual trained XGBoost model |
+| **Alerts** | Filterable list of detected attacks with severity and status |
+| **Model Performance** | Real experiment comparisons across all 4 trained models |
+| **About** | Project summary, generalization findings, and real-world deployment limitations |
+
+Styled as a dark SOC (Security Operations Center) interface — not a generic SaaS template.
+
+---
 
 ## 🧰 Tech Stack
 
@@ -83,36 +103,35 @@ Five fully functional pages, all backed by live data:
 | **Backend** | Node.js, Express.js, PostgreSQL, Helmet, Morgan, express-rate-limit |
 | **ML** | Python, Pandas, NumPy, Scikit-learn, XGBoost, imbalanced-learn, SHAP, Joblib |
 | **ML API** | FastAPI, Uvicorn, Pydantic |
-| **Testing** | Pytest (13 tests — schema validation, dataset loading, encoding fixes, leakage-safe splitting) |
+| **Testing** | Pytest (13+ tests — schema validation, dataset loading, encoding fixes, leakage-safe splitting) |
 
-## 📁 Repository Structure
+---
 
-network-intrusion-detection/
-├── ml/ # Data loaders, validators, EDA, preprocessing, models, FastAPI service
-├── web/
-│ ├── frontend/ # React dashboard (5 pages)
-│ └── backend/ # Express API + PostgreSQL
-└── docs/ # Architecture, research methodology, experiment logs, API docs
+## 🔬 Engineering & Research Practices
 
+- **Leakage prevention by design** — deduplication and invalid-row cleaning happen before any train/test split; scalers, encoders, and feature selectors fit on training data only.
+- **Skepticism toward good-looking results** — a 99%+ accuracy score triggered a full independent investigation rather than being reported at face value.
+- **Reproducibility** — every experiment configured via `ml/config.yaml`, logged with full traceability (model, hyperparameters, random seed, timing, metrics) under `ml/experiments/results/`.
+- **Documented, not hidden, limitations** — generalization gaps, rare-class exclusions, SVM subsampling, and real-world deployment barriers are all explicitly written up, not glossed over.
+- **Multi-dataset validation** — every model retrained from scratch per dataset; conclusions checked for consistency across three independently-sourced, differently-structured datasets before being trusted.
 
-## 🔬 Engineering Practices
-
-- **Leakage prevention by design:** deduplication and invalid-row cleaning happen before any train/test split; scalers, encoders, and feature selectors are fit on the training split only.
-- **Rigor over convenient numbers:** a 99%+ accuracy result on CICIDS2017 triggered a 5-test independent leakage investigation and a full cross-dataset validation on NSL-KDD before being trusted — not just reported at face value.
-- **Reproducibility:** every experiment is configured via `ml/config.yaml` and logged with full traceability (model, hyperparameters, random seed, timing, metrics) under `ml/experiments/results/`.
-- **No fabricated results:** every metric in this repository and dashboard comes from an actual executed, logged experiment. Known limitations (generalization gap, rare-class exclusion, SVM subsampling) are explicitly documented rather than hidden.
+---
 
 ## 📚 Datasets
 
-- **CICIDS2017** (primary) — [CIC, University of New Brunswick](https://www.unb.ca/cic/datasets/ids-2017.html)
-- **NSL-KDD** (cross-dataset validation) — trained and evaluated independently
-- **UNSW-NB15** (planned, not yet integrated)
+| Dataset | Role | Rows (train/test) |
+|---|---|---|
+| **CICIDS2017** | Primary | 1.76M / 0.50M (post-cleaning) |
+| **NSL-KDD** | Cross-dataset validation | 126K / 22.5K |
+| **UNSW-NB15** | Cross-dataset validation | 175K / 82K |
 
 Datasets are not bundled in this repository (large, license-gated). See [`ml/data/README.md`](ml/data/README.md) for download and setup instructions.
 
+---
+
 ## 🚀 Getting Started
 
-Three services must run simultaneously:
+Three services run simultaneously:
 
 ```bash
 # Terminal 1 — ML inference service (FastAPI)
@@ -125,8 +144,8 @@ uvicorn src.inference.app:app --reload --port 8000
 # Terminal 2 — Backend (Express + PostgreSQL)
 cd web/backend
 npm install
-cp .env.example .env   # configure DATABASE_URL
-node src/db/migrate.js  # create tables (run once)
+cp .env.example .env         # configure DATABASE_URL
+node src/db/migrate.js       # create tables (run once)
 node src/app.js
 
 # Terminal 3 — Frontend (React)
@@ -138,27 +157,33 @@ npm run dev
 
 Then open `http://localhost:5173`.
 
+---
+
 ## 📖 Key Documentation
 
-- [`docs/research/methodology.md`](docs/research/methodology.md) — full methodology, including the data leakage investigation and cross-dataset generalization findings
-- [`docs/research/research-questions.md`](docs/research/research-questions.md) — RQ1-RQ7 and their answers
-- [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md) — full system design
+- **[`docs/experiments/results-analysis.md`](docs/experiments/results-analysis.md)** — every model, every metric, every dataset, in one place
+- **[`docs/research/methodology.md`](docs/research/methodology.md)** — full methodology: leakage investigation, cross-dataset findings, deployment considerations
+- **[`docs/research/research-questions.md`](docs/research/research-questions.md)** — RQ1-RQ7, answered with evidence
+- **[`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md)** — full system design
+
+---
 
 ## 🗺️ Roadmap
 
-- [x] Baseline models: Logistic Regression, Decision Tree
-- [x] Advanced models: Random Forest, XGBoost, subsampled SVM
-- [x] Feature selection & PCA comparison
-- [x] SHAP-based explainability + permutation importance verification
-- [x] Data leakage investigation (5 independent tests)
-- [x] Cross-dataset validation on NSL-KDD + hyperparameter tuning
-- [x] FastAPI inference service
-- [x] Node/Express API + PostgreSQL persistence
-- [x] React SOC-style dashboard (5 pages)
-- [ ] UNSW-NB15 integration
+- [x] Baseline + advanced models across 3 independent datasets
+- [x] Feature optimization (All Features vs Selected vs PCA)
+- [x] SHAP explainability + permutation importance verification (all 3 datasets)
+- [x] 5-test data leakage investigation
+- [x] Cross-dataset generalization study + hyperparameter tuning proof
+- [x] Class-imbalance mathematical sanity check
+- [x] Full-stack app: FastAPI + Node/Express + PostgreSQL + React (5 pages)
+- [ ] Wire NSL-KDD/UNSW-NB15 models into the live dashboard/API (currently CICIDS2017 only)
 - [ ] Unified cross-dataset model (documented as future work — see methodology.md)
 - [ ] Automated backend/frontend test coverage
-- [ ] Research paper–style final writeup
+- [ ] Anomaly-detection model (autoencoder) for novel-attack detection
+- [ ] Statistical significance testing between models (McNemar's test)
+
+---
 
 ## 📄 License
 
