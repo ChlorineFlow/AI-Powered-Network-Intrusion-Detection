@@ -342,3 +342,33 @@ diversity, class balance direction) materially affect which modeling
 approach performs best, reinforcing that single-dataset benchmark
 results should not be treated as universal measures of NIDS model
 quality (see also: Real-world deployment considerations, above).
+
+
+
+## Class imbalance sanity check: dummy baseline comparison
+
+To directly test whether high reported accuracy reflects genuine
+learned signal or is primarily an artifact of class imbalance, every
+dataset's best model was compared against a trivial DummyClassifier
+that always predicts the majority class — a standard sanity check for
+exactly this concern.
+
+| Dataset      | Dummy accuracy | Real accuracy | Dummy F1 (macro) | Real F1 (macro) | F1 (macro) lift |
+|--------------|---------------:|---------------:|-------------------:|-------------------:|------------------:|
+| CICIDS2017   | 83.11%         | 99.92%         | 0.454               | 0.999               | +54.5 points       |
+| NSL-KDD      | 43.08%         | 79.81%         | 0.301               | 0.798               | +49.7 points       |
+| UNSW-NB15    | 55.06%         | 90.62%         | 0.355               | 0.904               | +54.9 points       |
+
+F1 (macro) — which weights both classes equally regardless of their
+size, and is specifically resistant to majority-class exploitation —
+shows a consistent ~50-55 point lift over the trivial baseline across
+all three datasets, despite the three datasets having different and
+even opposite class-imbalance directions (CICIDS2017 and NSL-KDD skew
+toward benign traffic; UNSW-NB15's official split skews toward attack
+traffic at 68%). This consistency across differently-imbalanced
+datasets is strong evidence that the reported performance reflects
+genuine learned discriminative signal rather than exploitation of
+class skew. Notably, CICIDS2017's dummy-baseline accuracy (83.11%) is
+itself high purely due to imbalance — underscoring why this project
+reports F1 (macro), precision/recall, and confusion matrices throughout
+rather than relying on accuracy alone (per project methodology, §21).
