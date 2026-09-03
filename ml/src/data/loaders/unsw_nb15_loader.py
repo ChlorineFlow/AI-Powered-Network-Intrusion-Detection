@@ -41,3 +41,29 @@ class UNSWNB15Loader(BaseDatasetLoader):
 
         validate_unsw_nb15(combined)
         return combined
+
+
+class UNSWNB15TrainTestLoader(BaseDatasetLoader):
+    """
+    Loader for the official UNSW-NB15 training-set/testing-set CSVs
+    (as published by the dataset's authors) — a fixed, pre-split format
+    distinct from the raw 4-part CSVs handled by UNSWNB15Loader above.
+    """
+
+    def __init__(self, raw_dir, filename: str):
+        super().__init__(raw_dir)
+        self.filename = filename
+
+    def load(self) -> pd.DataFrame:
+        path = self.raw_dir / self.filename
+        if not path.exists():
+            raise FileNotFoundError(
+                f"{path} not found. Place UNSW_NB15_training-set.csv / "
+                f"UNSW_NB15_testing-set.csv in {self.raw_dir} — see ml/data/README.md."
+            )
+        df = pd.read_csv(path, low_memory=False)
+        df.columns = df.columns.str.strip().str.lower()
+        if "id" in df.columns:
+            df = df.drop(columns=["id"])
+        validate_unsw_nb15(df)
+        return df

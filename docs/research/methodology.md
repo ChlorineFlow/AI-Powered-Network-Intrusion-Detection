@@ -300,3 +300,45 @@ rigorous methodology (leakage-safe evaluation, cross-dataset validation,
 explainability, documented limitations) rather than a
 deployment-ready product, and this section is presented as a known,
 explicitly acknowledged limitation rather than an oversight.
+
+
+## Third dataset: UNSW-NB15 results
+
+Models were independently trained on UNSW-NB15's official
+training-set/testing-set split (175,341 train / 82,332 test rows,
+45 features after dropping the `id` column). Note: this dataset's
+official split has attack as the majority class (68% attack in
+training) — the opposite imbalance direction from CICIDS2017 and
+NSL-KDD, a genuine structural difference between the three datasets.
+
+| Model               | Accuracy | F1 (macro) | ROC-AUC | FPR    | FNR   |
+|----------------------|---------:|-----------:|--------:|-------:|------:|
+| Logistic Regression  | 83.71%   | 0.831      | 0.9565  | 27.94% | 6.77% |
+| Decision Tree        | 88.92%   | 0.886      | 0.8993  | 19.21% | 4.45% |
+| **Random Forest**    | **90.62%** | **0.904** | 0.9840  | 16.96% | 3.19% |
+| XGBoost              | 87.38%   | 0.868      | 0.9837  | 26.04% | 1.66% |
+
+**Unlike CICIDS2017 and NSL-KDD, XGBoost is NOT the best-performing
+model on UNSW-NB15 — Random Forest wins on F1 (macro), accuracy, and
+false positive rate.** XGBoost retains the lowest false negative rate
+(1.66%, meaning it misses the fewest true attacks) but at the cost of
+a substantially higher false positive rate than Random Forest,
+illustrating the recall/false-positive trade-off (RQ6) concretely:
+the "best" model depends on whether minimizing missed attacks or
+minimizing analyst alert fatigue is prioritized.
+
+**Summary across all three datasets:**
+
+| Dataset      | Best model     | Best F1 (macro) |
+|--------------|----------------|-----------------:|
+| CICIDS2017   | XGBoost        | 0.999            |
+| UNSW-NB15    | Random Forest  | 0.904            |
+| NSL-KDD      | XGBoost        | 0.798            |
+
+No single model dominates across all three independently-trained
+evaluations, and performance varies substantially by dataset — evidence
+that dataset characteristics (traffic generation methodology, attack
+diversity, class balance direction) materially affect which modeling
+approach performs best, reinforcing that single-dataset benchmark
+results should not be treated as universal measures of NIDS model
+quality (see also: Real-world deployment considerations, above).
