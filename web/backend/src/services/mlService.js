@@ -49,3 +49,13 @@ export async function explainPrediction(features, model = "xgboost", topN = 10) 
   });
   return response.data;
 }
+
+export async function predictUnified(duration_sec, src_bytes, dst_bytes) {
+  const response = await client.post("/predict/unified", { duration_sec, src_bytes, dst_bytes });
+  return response.data;
+}
+
+export async function predictRouted(duration_sec, src_bytes, dst_bytes) {
+  const response = await client.post("/predict/routed", { duration_sec, src_bytes, dst_bytes });
+  return response.data;
+}

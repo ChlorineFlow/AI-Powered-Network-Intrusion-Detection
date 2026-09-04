@@ -84,3 +84,29 @@ function handleMlError(err, res) {
     error: "ML inference service is unavailable. Ensure FastAPI is running on ML_API_URL.",
   });
 }
+
+export async function predictUnified(req, res) {
+  try {
+    const { duration_sec, src_bytes, dst_bytes } = req.body;
+    if (duration_sec === undefined || src_bytes === undefined || dst_bytes === undefined) {
+      return res.status(422).json({ error: "Missing duration_sec, src_bytes, or dst_bytes." });
+    }
+    const result = await mlService.predictUnified(duration_sec, src_bytes, dst_bytes);
+    res.json(result);
+  } catch (err) {
+    handleMlError(err, res);
+  }
+}
+
+export async function predictRouted(req, res) {
+  try {
+    const { duration_sec, src_bytes, dst_bytes } = req.body;
+    if (duration_sec === undefined || src_bytes === undefined || dst_bytes === undefined) {
+      return res.status(422).json({ error: "Missing duration_sec, src_bytes, or dst_bytes." });
+    }
+    const result = await mlService.predictRouted(duration_sec, src_bytes, dst_bytes);
+    res.json(result);
+  } catch (err) {
+    handleMlError(err, res);
+  }
+}
