@@ -45,6 +45,28 @@ class ModelRegistry:
             self._multiclass_encoder = joblib.load(encoder_path)
             print("[model_registry] Loaded multiclass label encoder.")
 
+        # Domain-routing ensemble and unified common-feature model
+        self._experts = {}
+        self._router = None
+        self._unified = None
+
+        expert_names = ["cicids2017", "nsl_kdd", "unsw_nb15"]
+        for name in expert_names:
+            path = self.saved_models_dir / f"expert_common_{name}.joblib"
+            if path.exists():
+                self._experts[name] = joblib.load(path)
+                print(f"[model_registry] Loaded expert: {name}")
+
+        router_path = self.saved_models_dir / "domain_router.joblib"
+        if router_path.exists():
+            self._router = joblib.load(router_path)
+            print("[model_registry] Loaded domain router.")
+
+        unified_path = self.saved_models_dir / "unified_common_features_xgboost.joblib"
+        if unified_path.exists():
+            self._unified = joblib.load(unified_path)
+            print("[model_registry] Loaded unified common-features model.")
+
     def get_binary_model(self, name: str = DEFAULT_MODEL):
         if name not in self._binary_models:
             raise ValueError(
@@ -71,3 +93,16 @@ class ModelRegistry:
 
     def available_multiclass_models(self):
         return list(self._multiclass_models.keys())
+
+    def get_experts(self):
+        return self._experts
+
+    def get_router(self):
+        if self._router is None:
+            raise RuntimeError("Domain router not loaded.")
+        return self._router
+
+    def get_unified_model(self):
+        if self._unified is None:
+            raise RuntimeError("Unified common-features model not loaded.")
+        return self._unified

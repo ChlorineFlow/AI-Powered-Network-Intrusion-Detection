@@ -39,3 +39,21 @@ class ExplainResponse(BaseModel):
     prediction: str
     top_contributing_features: list[dict]
     model_used: str
+
+class CommonFeaturesRequest(BaseModel):
+    duration_sec: float = Field(..., description="Flow/connection duration in seconds")
+    src_bytes: float = Field(..., description="Bytes sent from source")
+    dst_bytes: float = Field(..., description="Bytes sent from destination")
+
+
+class RoutedPredictResponse(BaseModel):
+    prediction: str
+    confidence: float
+    routed_to_expert: str
+    router_confidence: float
+
+
+class UnifiedPredictResponse(BaseModel):
+    prediction: str
+    confidence: float
+    model_used: str = "unified_common_features"

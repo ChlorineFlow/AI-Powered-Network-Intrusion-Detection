@@ -19,6 +19,8 @@ import numpy as np
 import shap
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from src.inference.common_features import build_common_features_row, COMMON_FEATURE_NAMES
+from src.inference.schemas import CommonFeaturesRequest, RoutedPredictResponse, UnifiedPredictResponse
 
 from src.inference.model_registry import ModelRegistry, DEFAULT_MODEL
 from src.inference.schemas import (
@@ -150,6 +152,62 @@ def predict(request: PredictRequest):
         prediction="ATTACK" if pred == 1 else "BENIGN",
         confidence=confidence,
         model_used=model_name,
+    )
+
+
+@app.post("/predict/unified", response_model=UnifiedPredictResponse)
+def predict_unified(request: CommonFeaturesRequest):
+    """Exploratory: predicts using ONE model trained on a combined
+    dataset from all 3 sources, using only 5 common features. See
+    docs/research/methodology.md for this experiment's documented
+    limitations."""
+    try:
+        model = registry.get_unified_model()
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    X = build_common_features_row(request.duration_sec, request.src_bytes, request.dst_bytes)
+    pred = model.predict(X)[0]
+    proba = model.predict_proba(X)[0]
+
+    return UnifiedPredictResponse(
+        prediction="ATTACK" if pred == 1 else "BENIGN",
+        confidence=float(proba[pred]),
+    )
+
+
+@app.post("/predict/routed", response_model=RoutedPredictResponse)
+def predict_routed(request: CommonFeaturesRequest):
+    """Domain-routing ensemble: predicts which source dataset the flow
+    most resembles, then routes to that dataset's specialized 'expert'
+    model (all operating on the same 5 common features). See
+    docs/research/methodology.md for the oracle vs learned-router
+    performance comparison."""
+    try:
+        router = registry.get_router()
+        experts = registry.get_experts()
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    if not experts:
+        raise HTTPException(status_code=503, detail="No experts loaded.")
+
+    X = build_common_features_row(request.duration_sec, request.src_bytes, request.dst_bytes)
+
+    router_pred = router.predict(X)[0]
+    router_proba = router.predict_proba(X)[0]
+    dataset_names = ["cicids2017", "nsl_kdd", "unsw_nb15"]
+    chosen_dataset = dataset_names[router_pred]
+
+    expert = experts[chosen_dataset]
+    pred = expert.predict(X)[0]
+    proba = expert.predict_proba(X)[0]
+
+    return RoutedPredictResponse(
+        prediction="ATTACK" if pred == 1 else "BENIGN",
+        confidence=float(proba[pred]),
+        routed_to_expert=chosen_dataset,
+        router_confidence=float(router_proba[router_pred]),
     )
 
 
