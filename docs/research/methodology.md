@@ -513,3 +513,39 @@ is dominated by whichever source dataset is largest. A production-
 grade unified approach would likely require per-source normalization
 or explicit domain-balancing during training, neither of which was
 attempted here, consistent with this experiment's exploratory scope.
+
+
+## Investigating a feature-count paradox in the domain-routing experiment
+
+The domain-routing ensemble's NSL-KDD "oracle expert" (5 common
+features: duration and byte counts) scored F1 (macro) = 0.836,
+unexpectedly higher than the fully-featured specialized NSL-KDD model
+(122 features including one-hot encoded categoricals) at F1 = 0.798.
+Rather than report this uncritically, a controlled 2x2 comparison was
+run, holding hyperparameters fixed within each pair to isolate whether
+the effect was due to feature count or a hyperparameter difference
+between the two experiments:
+
+| Configuration          | Original hyperparams (depth=8, n=200) | Oracle hyperparams (depth=5, n=150) |
+|-------------------------|----------------------------------------:|---------------------------------------:|
+| Full 122 features       | 0.7978                                  | 0.8084                                  |
+| 5 common features       | 0.8207                                  | 0.8362                                  |
+
+**The 5-feature model outperforms the 122-feature model under both
+hyperparameter settings** — confirming this is a genuine feature-set
+effect, not a hyperparameter artifact. The likely cause: NSL-KDD's
+`service` categorical field alone expands to 60+ sparse one-hot
+columns, and at the tree depths tested, XGBoost's splits are diluted
+across many low-signal sparse indicator columns rather than
+concentrating on the small number of genuinely strong continuous
+signals (duration, byte counts). This is consistent with well-known
+curse-of-dimensionality effects from high-cardinality categorical
+encoding.
+
+Notably, this is the OPPOSITE direction from CICIDS2017's feature
+optimization result (Step 7), where reducing from 78 to 39-25 features
+slightly *hurt* performance. This contrast is itself informative:
+whether feature reduction helps or hurts is dataset-dependent, governed
+by how much of the excluded features' variance is genuine signal
+versus dilutive noise — a determination that cannot be assumed and
+must be tested per dataset, as done here.
