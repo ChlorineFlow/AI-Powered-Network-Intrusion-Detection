@@ -1,16 +1,18 @@
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
-import { LayoutDashboard, Activity, ShieldAlert, BarChart3, Info } from "lucide-react";
+import { LayoutDashboard, Activity, ShieldAlert, BarChart3, Info, GitBranch } from "lucide-react";
 import Dashboard from "./pages/Dashboard.jsx";
 import TrafficAnalysis from "./pages/TrafficAnalysis.jsx";
 import ModelPerformance from "./pages/ModelPerformance.jsx";
 import Alerts from "./pages/Alerts.jsx";
 import About from "./pages/About.jsx";
+import CrossDatasetInsights from "./pages/CrossDatasetInsights.jsx";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/traffic", label: "Traffic Analysis", icon: Activity },
   { to: "/alerts", label: "Alerts", icon: ShieldAlert },
   { to: "/model-performance", label: "Model Performance", icon: BarChart3 },
+  { to: "/cross-dataset", label: "Cross-Dataset Insights", icon: GitBranch },
   { to: "/about", label: "About", icon: Info },
 ];
 
@@ -57,6 +59,7 @@ export default function App() {
             <Route path="/traffic" element={<TrafficAnalysis />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/model-performance" element={<ModelPerformance />} />
+            <Route path="/cross-dataset" element={<CrossDatasetInsights />} />
             <Route path="/about" element={<About />} />
           </Routes>
         </main>

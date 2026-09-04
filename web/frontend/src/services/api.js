@@ -14,3 +14,9 @@ export const predict = (features, model = "xgboost") =>
   client.post("/api/predict", { features, model }).then((r) => r.data);
 export const predictBatch = (rows, model = "xgboost") =>
   client.post("/api/predict/batch", { rows, model }).then((r) => r.data);
+
+export const predictUnified = (duration_sec, src_bytes, dst_bytes) =>
+  client.post("/api/predict/unified", { duration_sec, src_bytes, dst_bytes }).then((r) => r.data);
+
+export const predictRouted = (duration_sec, src_bytes, dst_bytes) =>
+  client.post("/api/predict/routed", { duration_sec, src_bytes, dst_bytes }).then((r) => r.data);
