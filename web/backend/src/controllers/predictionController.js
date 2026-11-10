@@ -14,6 +14,7 @@ export async function predict(req, res) {
       prediction: result.prediction,
       confidence: result.confidence,
       modelUsed: result.model_used,
+      attackType: result.attack_type || null,
       source: "api",
     });
 
@@ -40,6 +41,7 @@ export async function predictBatch(req, res) {
         confidence: r.confidence,
         modelUsed: result.model_used,
         source: "csv_upload",
+        attackType: r.attack_type || null,
       });
     }
 

@@ -27,6 +27,7 @@ class PredictResponse(BaseModel):
     prediction: str  # "BENIGN" or "ATTACK"
     confidence: float
     model_used: str
+    attack_type: Optional[str] = None
 
 
 class ExplainRequest(BaseModel):

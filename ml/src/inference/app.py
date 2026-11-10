@@ -88,6 +88,17 @@ def get_expected_columns(model) -> list[str]:
         detail="Could not determine expected feature columns for this model.",
     )
 
+def predict_attack_types(X):
+    """Run the multiclass model on rows already flagged as ATTACK."""
+    try:
+        mc_model = registry.get_multiclass_model(DEFAULT_MODEL)
+        encoder = registry.get_multiclass_encoder()
+        mc_cols = get_expected_columns(mc_model)
+        labels = encoder.inverse_transform(mc_model.predict(X[mc_cols]))
+        return [None if str(l) == "BENIGN" else str(l) for l in labels]
+    except Exception as e:
+        print(f"[attack-type] multiclass step skipped: {e}")
+        return [None] * len(X)
 
 @app.get("/health")
 def health():
@@ -146,12 +157,13 @@ def predict(request: PredictRequest):
 
     pred = model.predict(X)[0]
     proba = model.predict_proba(X)[0]
-    confidence = float(proba[pred])
+    attack_type = predict_attack_types(X)[0] if pred == 1 else None
 
     return PredictResponse(
         prediction="ATTACK" if pred == 1 else "BENIGN",
-        confidence=confidence,
+        confidence=float(proba[pred]),
         model_used=model_name,
+        attack_type=attack_type,
     )
 
 
@@ -227,18 +239,23 @@ def predict_batch(request: PredictBatchRequest):
     if missing_in_first:
         raise HTTPException(
             status_code=422,
-            detail=f"Missing required feature(s) in input rows: "
-                   f"{missing_in_first[:10]}",
+            detail=f"Missing required feature(s) in input rows: {missing_in_first[:10]}",
         )
 
     X = pd.DataFrame(request.rows)[expected_cols]
     preds = model.predict(X)
     probas = model.predict_proba(X)
 
+    attack_idx = [i for i, p in enumerate(preds) if p == 1]
+    attack_types = {}
+    if attack_idx:
+        attack_types = dict(zip(attack_idx, predict_attack_types(X.iloc[attack_idx])))
+
     results = [
         {
             "prediction": "ATTACK" if p == 1 else "BENIGN",
             "confidence": float(probas[i][p]),
+            "attack_type": attack_types.get(i),
         }
         for i, p in enumerate(preds)
     ]
